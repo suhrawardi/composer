@@ -1,0 +1,5 @@
+.stack-work/
+composer.cabal
+*~
+/dist
+/composer-exe

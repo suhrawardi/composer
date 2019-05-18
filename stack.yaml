@@ -1,0 +1,13 @@
+flags: {}
+packages:
+- .
+extra-deps:
+- Euterpea-2.0.6
+- HSoM-1.0.0
+- PortMidi-0.1.6.1
+- Stream-0.4.7.2
+- UISF-0.4.0.0
+- arrows-0.4.4.2
+- lazysmallcheck-0.6
+- pure-fft-0.2.0
+resolver: lts-12.13
