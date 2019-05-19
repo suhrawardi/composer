@@ -12,7 +12,8 @@ import FRP.UISF
 
 
 channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = topDown $ setSize (400, 600) $ proc (channel, miM) -> do
+channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
+    _ <- title "Channel" display -< channel
     isPlaying <- buttonsPanel >>> handleButtons -< ()
     moM <- delayPanel -< miM
 
@@ -29,6 +30,7 @@ decay dur m =
                   then let v' = truncate(fromIntegral v * 2.4)
                        in Just (ANote c k v' d)
                   else Nothing
+
   in case m of
     ANote c k v d      -> f c k v d
     Std (NoteOn c k v) -> f c k v dur
@@ -39,6 +41,24 @@ delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
 delayPanel = title "Delay" $ topDown $ proc m -> do
     d <- title "Decay rate" $ withDisplay (hSlider (0, 0.9) 0.1) -< ()
     f <- title "Echo frequency" $ withDisplay (hSlider (0, 10) 0) -< ()
-    rec s <- vdelay -< (1/f, fmap (mapMaybe (decay d)) m')
+
+    rSeed <- title "Rand" $ withDisplay (hSlider (2.4, 4.0) 2.4) -< ()
+    t <- timer -< d
+    r <- accum 0.1 -< fmap (const (grow rSeed)) t
+    _ <- title "Decay" display -< normalize d r
+
+    rec s <- vdelay -< (1/f, fmap (mapMaybe (decay (normalize d r))) m')
         let m' = mappend m s
     returnA -< s
+
+
+grow :: Double -> Double -> Double
+grow r x = r * x * (1 - x)
+
+
+normalize :: Double -> Double -> Double
+normalize d r = d * normalizeGrowth r
+
+
+normalizeGrowth :: Double -> Double
+normalizeGrowth x = (/100) $ fromIntegral $ round $ (*100) $ (+0.42) x

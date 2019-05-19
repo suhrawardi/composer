@@ -11,7 +11,7 @@ import HSoM
 import MidiPanel
 
 
-runMainUI = runMUI (styling "Composer" (1900, 800)) mainUI
+runMainUI = runMUI (styling "Composer" (2000, 800)) mainUI
 
 
 mainUI :: UISF () ()
