@@ -22,7 +22,7 @@ channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
                    then moM
                    else Nothing
 
-    returnA -< moM
+    returnA -< moM'
 
 
 decay :: MidiMessage -> Maybe MidiMessage
