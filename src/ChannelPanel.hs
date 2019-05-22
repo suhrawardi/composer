@@ -9,6 +9,7 @@ import Data.Maybe (mapMaybe, isJust)
 import Euterpea
 import HSoM
 import FRP.UISF
+import System.Random
 
 
 channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
@@ -36,11 +37,21 @@ decay m =
     _                  -> Nothing
 
 
+decayWithRandNote :: MidiMessage -> Maybe Int -> Maybe MidiMessage
+decayWithRandNote (ANote ap k v dur) Nothing = decay (ANote ap k v dur)
+decayWithRandNote (ANote ap k v dur) randNote = do
+    rand <- randNote
+    let (_, oct) = pitch ap
+        randAp = 12 * (2 + 1) + rand
+    decay (ANote randAp k v dur)
+
+
 delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
 delayPanel = title "Delay" $ leftRight $ proc m -> do
-    notes <- topDown $ setSize (60, 315) $ title "Notes" $ checkGroup notes -< ()
+    sourceNotes <- topDown $ setSize (60, 315) $ title "Gate" $ checkGroup notes -< ()
+    targetNotes <- topDown $ setSize (60, 315) $ title "Note" $ checkGroup notes -< ()
 
-    (d, r, m, f, oct) <- (| topDown ( do
+    (d, r, f, oct) <- (| topDown ( do
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
       d <- title "Decay rate" $ withDisplay (hSlider (0, 0.9) 0.1) -< ()
       f <- title "Echo frequency" $ withDisplay (hSlider (0, 10) 0) -< ()
@@ -49,9 +60,11 @@ delayPanel = title "Delay" $ leftRight $ proc m -> do
       t <- timer -< d
       r <- accum 0.1 -< fmap (const (grow rSeed)) t
       _ <- title "Decay" display -< normalize d r
-      returnA -< (d, r, m, f, oct) ) |)
+      returnA -< (d, r, f, oct) ) |)
 
-    rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay notes oct (normalize d r))) m')
+    t <- timer -< r
+    randNote <- randNote -< (targetNotes, t)
+    rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay sourceNotes randNote oct (normalize d r))) m')
         let m' = mappend m s
 
     returnA -< s
@@ -61,14 +74,23 @@ grow :: Double -> Double -> Double
 grow r x = r * x * (1 - x)
 
 
-maybeDecay :: [PitchClass] -> Octave -> Time -> MidiMessage -> Maybe MidiMessage
-maybeDecay notes oct dur (Std (NoteOn c k v)) = maybeDecay notes oct dur (ANote c k v dur)
-maybeDecay notes oct dur (ANote c k v _)      =
+maybeDecay :: [PitchClass] -> Maybe Int -> Octave -> Time -> MidiMessage -> Maybe MidiMessage
+maybeDecay notes randNote oct dur (Std (NoteOn c k v)) = maybeDecay notes randNote oct dur (ANote c k v dur)
+maybeDecay notes randNote oct dur (ANote c k v _)      =
     let (p, _) = pitch c
         ap = absPitch (p, oct)
     in if elem p notes
-           then decay (ANote ap k v dur)
+           then decayWithRandNote (ANote ap k v dur) randNote
            else Nothing
+
+
+randNote :: UISF ([PitchClass], Maybe ()) (Maybe Int)
+randNote = proc (notes, _) -> do
+    i <- liftAIO randomRIO -< (0, length notes - 1)
+    let note = case notes of
+                    []  -> Nothing
+                    _   -> Just $ pcToInt $ notes !! i
+    returnA -< note
 
 
 normalize :: Double -> Double -> Double
@@ -87,3 +109,7 @@ notes = [("C", C), ("Cs", Cs),
          ("G", G), ("Gs", Gs),
          ("A", A), ("As", As),
          ("B", B), ("Bs", Bs)]
+
+
+sGen :: StdGen
+sGen = mkStdGen 42
