@@ -18,11 +18,9 @@ channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
     isPlaying <- buttonsPanel >>> handleButtons -< ()
     moM <- delayPanel -< miM
 
-    let moM' = if isPlaying && isJust moM
-                   then moM
-                   else Nothing
-
-    returnA -< moM'
+    if isPlaying
+      then returnA -< moM
+      else returnA -< Nothing
 
 
 decay :: MidiMessage -> Maybe MidiMessage
@@ -47,14 +45,14 @@ decayWithRandNote (ANote ap k v dur) randNote = do
 
 
 delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
-delayPanel = title "Delay" $ leftRight $ proc m -> do
-    sourceNotes <- topDown $ setSize (60, 315) $ title "Gate" $ checkGroup notes -< ()
-    targetNotes <- topDown $ setSize (60, 315) $ title "Note" $ checkGroup notes -< ()
+delayPanel = title "Channel" $ leftRight $ proc m -> do
+    sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
+    targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
 
     (d, r, f, oct) <- (| topDown ( do
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
       d <- title "Decay rate" $ withDisplay (hSlider (0, 0.9) 0.1) -< ()
-      f <- title "Echo frequency" $ withDisplay (hSlider (0, 10) 0) -< ()
+      f <- title "Echo frequency" $ withDisplay (hiSlider 1 (1, 10) 2) -< ()
 
       rSeed <- title "Rand" $ withDisplay (hSlider (2.4, 4.0) 2.4) -< ()
       t <- timer -< d
@@ -64,7 +62,7 @@ delayPanel = title "Delay" $ leftRight $ proc m -> do
 
     t <- timer -< r
     randNote <- randNote -< (targetNotes, t)
-    rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay sourceNotes randNote oct (normalize d r))) m')
+    rec s <- vdelay -< (1/(fromIntegral f), fmap (mapMaybe (maybeDecay sourceNotes randNote oct (normalize d r))) m')
         let m' = mappend m s
 
     returnA -< s
@@ -82,6 +80,7 @@ maybeDecay notes randNote oct dur (ANote c k v _)      =
     in if elem p notes
            then decayWithRandNote (ANote ap k v dur) randNote
            else Nothing
+maybeDecay _ _ _ _ _ = Nothing
 
 
 randNote :: UISF ([PitchClass], Maybe ()) (Maybe Int)

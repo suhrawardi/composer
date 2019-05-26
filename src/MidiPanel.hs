@@ -4,16 +4,18 @@ module MidiPanel (
     midiPanel
   ) where
 
+import Debugger
 import Euterpea
 import FRP.UISF
 import HSoM
 
 
 midiPanel :: UISF () (Maybe OutputDeviceID, Maybe [MidiMessage])
-midiPanel = topDown $ setSize (500, 600) $ proc _ -> do
+midiPanel = topDown $ setSize (500, 401) $ proc _ -> do
     (mo, mi) <- getDeviceIDs -< ()
     miM <- midiIn -< mi
-    _ <- title "Midi in" display -< miM
+    _ <- title "Midi in" display -< maybeTrace miM
+
     returnA -< (mo, miM)
 
 
