@@ -12,7 +12,7 @@ import MidiConverterPanel
 import MidiPanel
 
 
-runMainUI = runMUI (styling "Composer" (2000, 800)) mainUI
+runMainUI = runMUI (styling "Composer" (2500, 550)) mainUI
 
 
 mainUI :: UISF () ()
@@ -29,7 +29,9 @@ mainUI = leftRight $ proc _ -> do
 
   out4 <- channelPanel -< (4, miM)
 
-  midiOut -< (mo, mappend (mappend (mappend out1 out2) out3) out4)
+  out5 <- channelPanel -< (5, miM)
+
+  midiOut -< (mo, mappend (mappend (mappend (mappend out1 out2) out3) out4) out5)
 
 
 styling :: String -> (Int, Int) -> UIParams
