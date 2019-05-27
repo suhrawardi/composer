@@ -11,7 +11,7 @@ import HSoM
 
 
 midiPanel :: UISF () (Maybe OutputDeviceID, Maybe [MidiMessage])
-midiPanel = topDown $ setSize (500, 401) $ proc _ -> do
+midiPanel = topDown $ setSize (500, 301) $ proc _ -> do
     (mo, mi) <- getDeviceIDs -< ()
     miM <- midiIn -< mi
     _ <- title "Midi in" display -< maybeTrace miM
