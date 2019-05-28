@@ -16,88 +16,44 @@ channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
 channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
     _ <- title "Channel" display -< channel
     isPlaying <- buttonsPanel >>> handleButtons -< ()
-    moM <- delayPanel -< miM
+    oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
+
+    sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
+    targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
+    t <- timer -< 1
+    note <- randNote -< (targetNotes, oct, t)
+
+    -- rec s <- vdelay -< (0.1, fmap (mapMaybe (convert channel randNote)) miM')
+    --     let miM' = mappend miM s
 
     if isPlaying
-      then returnA -< moM
+      then returnA -< fmap (mapMaybe (convert sourceNotes channel note)) miM
       else returnA -< Nothing
 
 
-decay :: MidiMessage -> Maybe MidiMessage
-decay m =
-  let f c k v d = if v > 0
-                  then let v' = truncate(fromIntegral v * 2.4)
-                       in Just (ANote c k v' d)
-                  else Nothing
-
-  in case m of
-    ANote c k v d      -> f c k v d
-    _                  -> Nothing
-
-
-decayWithRandNote :: MidiMessage -> Maybe Int -> Maybe MidiMessage
-decayWithRandNote (ANote ap k v dur) Nothing = decay (ANote ap k v dur)
-decayWithRandNote (ANote ap k v dur) randNote = do
-    rand <- randNote
-    let (_, oct) = pitch ap
-        randAp = 12 * (2 + 1) + rand
-    decay (ANote randAp k v dur)
-
-
-delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
-delayPanel = title "Channel" $ leftRight $ proc m -> do
-    sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
-    targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
-
-    (d, r, f, oct) <- (| topDown ( do
-      oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
-      d <- title "Decay rate" $ withDisplay (hSlider (0, 0.9) 0.1) -< ()
-      f <- title "Echo frequency" $ withDisplay (hiSlider 1 (1, 10) 2) -< ()
-
-      rSeed <- title "Rand" $ withDisplay (hSlider (2.4, 4.0) 2.4) -< ()
-      t <- timer -< d
-      r <- accum 0.1 -< fmap (const (grow rSeed)) t
-      _ <- title "Decay" display -< normalize d r
-      returnA -< (d, r, f, oct) ) |)
-
-    t <- timer -< r
-    randNote <- randNote -< (targetNotes, t)
-    rec s <- vdelay -< (1/(fromIntegral f), fmap (mapMaybe (maybeDecay sourceNotes randNote oct (normalize d r))) m')
-        let m' = mappend m s
-
-    returnA -< s
-
-
-grow :: Double -> Double -> Double
-grow r x = r * x * (1 - x)
-
-
-maybeDecay :: [PitchClass] -> Maybe Int -> Octave -> Time -> MidiMessage -> Maybe MidiMessage
-maybeDecay notes randNote oct dur (Std (NoteOn c k v)) = maybeDecay notes randNote oct dur (ANote c k v dur)
-maybeDecay notes randNote oct dur (ANote c k v _)      =
+convert :: [PitchClass] -> Int -> Maybe Int -> MidiMessage -> Maybe MidiMessage
+convert notes channel note (Std (NoteOn c k v)) = do
     let (p, _) = pitch c
-        ap = absPitch (p, oct)
-    in if elem p notes
-           then decayWithRandNote (ANote ap k v dur) randNote
-           else Nothing
-maybeDecay _ _ _ _ _ = Nothing
+    randN <- note
+    if p `elem` notes
+        then Just (Std (NoteOn channel randN v))
+        else Nothing
+convert notes channel note (Std (NoteOff c k v)) = do
+    randN <- note
+    let (p, _) = pitch c
+    if p `elem` notes
+        then Just (Std (NoteOff channel randN v))
+        else Nothing
+convert notes channel note _ = Nothing
 
 
-randNote :: UISF ([PitchClass], Maybe ()) (Maybe Int)
-randNote = proc (notes, _) -> do
+randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)
+randNote = proc (notes, oct, _) -> do
     i <- liftAIO randomRIO -< (0, length notes - 1)
     let note = case notes of
                     []  -> Nothing
-                    _   -> Just $ pcToInt $ notes !! i
+                    _   -> Just $ absPitch (notes !! i, oct)
     returnA -< note
-
-
-normalize :: Double -> Double -> Double
-normalize d r = d * normalizeGrowth r
-
-
-normalizeGrowth :: Double -> Double
-normalizeGrowth x = (/100) $ fromIntegral $ round $ (*100) $ (+0.42) x
 
 
 notes :: [(String, PitchClass)]
