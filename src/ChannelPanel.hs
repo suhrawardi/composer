@@ -17,17 +17,18 @@ channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
     _ <- title "Channel" display -< channel
     isPlaying <- buttonsPanel >>> handleButtons -< ()
     oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
+    delay <- title "Delay" $ withDisplay (hSlider (0, 50) 0) -< ()
 
     sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
     t <- timer -< 1
     note <- randNote -< (targetNotes, oct, t)
 
-    -- rec s <- vdelay -< (0.1, fmap (mapMaybe (convert channel randNote)) miM')
-    --     let miM' = mappend miM s
+    rec s <- vdelay -< (delay, fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
+        let miM' = mappend miM s
 
     if isPlaying
-      then returnA -< fmap (mapMaybe (convert sourceNotes channel oct note)) miM
+      then returnA -< miM'
       else returnA -< Nothing
 
 
