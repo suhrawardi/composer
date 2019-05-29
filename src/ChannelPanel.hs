@@ -18,19 +18,25 @@ channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel,
     sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
 
-    (isPlaying, oct, delay) <- (| topDown ( do
+    (isPlaying, oct, delay, note) <- (| topDown ( do
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         isPlaying <- buttonsPanel >>> handleButtons -< ()
         returnA -< isPlaying ) |)
 
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
-      delay <- title "Delay" $ withDisplay (hSlider (0, 50) 0) -< ()
-      delay' <- randPanel -< delay
-      returnA -< (isPlaying, oct, delay') ) |)
+      delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
 
-    t <- timer -< 1
-    note <- randNote -< (targetNotes, oct, t)
+      t <- timer -< 1
+      delay' <- randPanel -< (fromIntegral delay, t)
+      note <- randNote -< (targetNotes, oct, t)
+
+      _ <- (| leftRight ( do
+        _ <- title "Dur" $ display -< delay'
+        _ <- title "Rand note" $ display -< note
+        returnA -< () ) |)
+
+      returnA -< (isPlaying, oct, delay', note) ) |)
 
     rec s <- vdelay -< (delay, fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
         let miM' = mappend miM s

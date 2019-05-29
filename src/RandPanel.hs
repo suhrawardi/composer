@@ -10,12 +10,11 @@ import FRP.UISF
 import System.Random
 
 
-randPanel :: UISF Double Double
-randPanel = topDown $ proc dur -> do
-    rSeed <- title "Randomness" $ withDisplay (hSlider (2.4, 4.0) 2.4) -< ()
-    t <- timer -< dur
+randPanel :: UISF (Double, Maybe ()) Double
+randPanel = topDown $ proc (dur, t) -> do
+    rSeed <- title "Randomness" $ hSlider (2.4, 4.0) 2.4 -< ()
     r <- accum 0.1 -< fmap (const (grow rSeed)) t
-    returnA -< normalize dur r
+    returnA -< (normalize dur r)
 
 
 grow :: Double -> Double -> Double
