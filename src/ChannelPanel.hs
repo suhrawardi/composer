@@ -27,24 +27,36 @@ channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
     --     let miM' = mappend miM s
 
     if isPlaying
-      then returnA -< fmap (mapMaybe (convert sourceNotes channel note)) miM
+      then returnA -< fmap (mapMaybe (convert sourceNotes channel oct note)) miM
       else returnA -< Nothing
 
 
-convert :: [PitchClass] -> Int -> Maybe Int -> MidiMessage -> Maybe MidiMessage
-convert notes channel note (Std (NoteOn c k v)) = do
+convert :: [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
+convert notes channel oct Nothing (Std (NoteOn c k v)) = do
+    let (p, _) = pitch c
+        randNote = 12 * oct + pcToInt p
+    if p `elem` notes
+        then Just (Std (NoteOn channel randNote v))
+        else Nothing
+convert notes channel oct Nothing (Std (NoteOff c k v)) = do
+    let (p, _) = pitch c
+        randNote = 12 * oct + pcToInt p
+    if p `elem` notes
+        then Just (Std (NoteOff channel randNote v))
+        else Nothing
+convert notes channel oct note (Std (NoteOn c k v)) = do
     let (p, _) = pitch c
     randN <- note
     if p `elem` notes
         then Just (Std (NoteOn channel randN v))
         else Nothing
-convert notes channel note (Std (NoteOff c k v)) = do
+convert notes channel oct note (Std (NoteOff c k v)) = do
     randN <- note
     let (p, _) = pitch c
     if p `elem` notes
         then Just (Std (NoteOff channel randN v))
         else Nothing
-convert notes channel note _ = Nothing
+convert notes channel oct note _ = Nothing
 
 
 randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)
