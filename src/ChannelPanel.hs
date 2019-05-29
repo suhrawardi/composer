@@ -13,14 +13,19 @@ import System.Random
 
 
 channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = topDown $ setSize (500, 600) $ proc (channel, miM) -> do
-    _ <- title "Channel" display -< channel
-    isPlaying <- buttonsPanel >>> handleButtons -< ()
-    oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
-    delay <- title "Delay" $ withDisplay (hSlider (0, 50) 0) -< ()
-
+channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel, miM) -> do
     sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
+
+    (isPlaying, oct, delay) <- (| topDown ( do
+      (isPlaying) <- (| leftRight ( do
+        _ <- title "Channel" display -< channel
+        isPlaying <- buttonsPanel >>> handleButtons -< ()
+        returnA -< (isPlaying) ) |)
+      oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
+      delay <- title "Delay" $ withDisplay (hSlider (0, 50) 0) -< ()
+      returnA -< (isPlaying, oct, delay) ) |)
+
     t <- timer -< 1
     note <- randNote -< (targetNotes, oct, t)
 
