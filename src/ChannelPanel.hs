@@ -9,6 +9,7 @@ import Data.Maybe (mapMaybe, isJust)
 import Euterpea
 import HSoM
 import FRP.UISF
+import RandPanel
 import System.Random
 
 
@@ -21,10 +22,12 @@ channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel,
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         isPlaying <- buttonsPanel >>> handleButtons -< ()
-        returnA -< (isPlaying) ) |)
+        returnA -< isPlaying ) |)
+
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
       delay <- title "Delay" $ withDisplay (hSlider (0, 50) 0) -< ()
-      returnA -< (isPlaying, oct, delay) ) |)
+      delay' <- randPanel -< delay
+      returnA -< (isPlaying, oct, delay') ) |)
 
     t <- timer -< 1
     note <- randNote -< (targetNotes, oct, t)
