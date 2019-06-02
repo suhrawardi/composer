@@ -31,9 +31,12 @@ maybeDecay _   _     = Nothing
 
 delayPanel :: UISF (Double, Maybe [MidiMessage]) (Maybe [MidiMessage])
 delayPanel = title "Channel" $ topDown $ proc (dur, m) -> do
-    f <- title "Echo frequency" $ withDisplay (hSlider (1, 10) 2) -< ()
+    f <- title "Echo frequency" $ withDisplay (hSlider (0, 10) 0) -< ()
 
-    rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay dur)) m')
-        let m' = mappend m s
-
-    returnA -< s
+    if f == 0
+      then
+        returnA -< m
+      else do
+        rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay dur)) m')
+            let m' = mappend m s
+        returnA -< s

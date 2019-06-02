@@ -15,11 +15,12 @@ import System.Random
 
 
 channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel, miM) -> do
+channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel, miM) -> do
+    sourceOcts <- topDown $ setSize (60, 315) $ title "Oct" $ checkGroup octaves -< ()
     sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
 
-    (isPlaying, oct, delay, note) <- (| topDown ( do
+    (isPlaying, miM') <- (| topDown ( do
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         isPlaying <- buttonsPanel >>> handleButtons -< ()
@@ -37,16 +38,15 @@ channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel,
         _ <- title "Rand note" $ display -< note
         returnA -< () ) |)
 
-      returnA -< (isPlaying, oct, delay', note) ) |)
+      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
+          let miM' = mappend miM s
+      miM'' <- delayPanel -< (delay', miM')
+
+      returnA -< (isPlaying, miM'') ) |)
 
     if isPlaying
-      then do
-        rec s <- vdelay -< (delay, fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
-            let miM' = mappend miM s
-        miM'' <- delayPanel -< (delay, miM')
-        returnA -< miM''
-      else do
-        returnA -< Nothing
+      then returnA -< miM'
+      else returnA -< Nothing
 
 
 convert :: [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
@@ -94,6 +94,11 @@ notes = [("C", C), ("Cs", Cs),
          ("G", G), ("Gs", Gs),
          ("A", A), ("As", As),
          ("B", B), ("Bs", Bs)]
+
+
+octaves :: [(String, Int)]
+octaves = [("1", 1), ("2", 2), ("3", 3), ("4", 4), ("5", 5),
+           ("6", 6), ("7", 7), ("8", 8), ("9", 9)]
 
 
 sGen :: StdGen

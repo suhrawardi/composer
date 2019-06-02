@@ -12,7 +12,7 @@ import MidiConverterPanel
 
 
 midiPanel :: UISF () (Maybe OutputDeviceID, Maybe [MidiMessage], Maybe [MidiMessage])
-midiPanel = topDown $ setSize (400, 301) $ proc _ -> do
+midiPanel = topDown $ setSize (360, 301) $ proc _ -> do
     (mo, mi) <- getDeviceIDs -< ()
     miM <- midiIn -< mi
     _ <- title "Midi in" display -< maybeTrace miM
