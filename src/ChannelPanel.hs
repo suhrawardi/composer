@@ -38,7 +38,7 @@ channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel,
         _ <- title "Rand note" $ display -< note
         returnA -< () ) |)
 
-      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
+      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM')
           let miM' = mappend miM s
       miM'' <- delayPanel -< (delay', miM')
 
@@ -49,32 +49,32 @@ channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel,
       else returnA -< Nothing
 
 
-convert :: [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
-convert notes channel oct Nothing (Std (NoteOn c k v)) = do
-    let (p, _) = pitch c
+convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
+convert octs notes channel oct Nothing (Std (NoteOn c k v)) = do
+    let (p, o) = pitch c
         randNote = 12 * oct + pcToInt p
     if p `elem` notes
         then Just (Std (NoteOn channel randNote v))
         else Nothing
-convert notes channel oct Nothing (Std (NoteOff c k v)) = do
-    let (p, _) = pitch c
+convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
+    let (p, o) = pitch c
         randNote = 12 * oct + pcToInt p
     if p `elem` notes
         then Just (Std (NoteOff channel randNote v))
         else Nothing
-convert notes channel oct note (Std (NoteOn c k v)) = do
-    let (p, _) = pitch c
+convert octs notes channel oct note (Std (NoteOn c k v)) = do
+    let (p, o) = pitch c
     randN <- note
     if p `elem` notes
         then Just (Std (NoteOn channel randN v))
         else Nothing
-convert notes channel oct note (Std (NoteOff c k v)) = do
+convert octs notes channel oct note (Std (NoteOff c k v)) = do
     randN <- note
-    let (p, _) = pitch c
+    let (p, o) = pitch c
     if p `elem` notes
         then Just (Std (NoteOff channel randN v))
         else Nothing
-convert notes channel oct note _ = Nothing
+convert octs notes channel oct note _ = Nothing
 
 
 randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)
@@ -96,7 +96,7 @@ notes = [("C", C), ("Cs", Cs),
          ("B", B), ("Bs", Bs)]
 
 
-octaves :: [(String, Int)]
+octaves :: [(String, Octave)]
 octaves = [("1", 1), ("2", 2), ("3", 3), ("4", 4), ("5", 5),
            ("6", 6), ("7", 7), ("8", 8), ("9", 9)]
 
