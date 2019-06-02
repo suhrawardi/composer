@@ -6,6 +6,7 @@ module ChannelPanel (
 
 import Buttons
 import Data.Maybe (mapMaybe, isJust)
+import DelayPanel
 import Euterpea
 import HSoM
 import FRP.UISF
@@ -38,12 +39,14 @@ channelPanel = leftRight $ setSize (500, 600) $ title "Channel" $ proc (channel,
 
       returnA -< (isPlaying, oct, delay', note) ) |)
 
-    rec s <- vdelay -< (delay, fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
-        let miM' = mappend miM s
-
     if isPlaying
-      then returnA -< miM'
-      else returnA -< Nothing
+      then do
+        rec s <- vdelay -< (delay, fmap (mapMaybe (convert sourceNotes channel oct note)) miM')
+            let miM' = mappend miM s
+        miM'' <- delayPanel -< (delay, miM')
+        returnA -< miM''
+      else do
+        returnA -< Nothing
 
 
 convert :: [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
