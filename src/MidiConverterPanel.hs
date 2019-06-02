@@ -34,7 +34,7 @@ convert channel oct msg = convertOct oct (convertMsg channel msg)
 
 midiConverterPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
 midiConverterPanel = topDown $ setSize (360, 150) $ proc (channel, miM) -> do
-    isPlaying <- buttonsPanel >>> handleButtons -< ()
+    isPlaying <- buttonsPanel -< ()
     oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
     rec s <- vdelay -< (0.1, fmap (mapMaybe (convert channel oct)) miM')
         let miM' = mappend miM s

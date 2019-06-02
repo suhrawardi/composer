@@ -23,7 +23,7 @@ channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel,
     (isPlaying, miM') <- (| topDown ( do
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
-        isPlaying <- buttonsPanel >>> handleButtons -< ()
+        isPlaying <- buttonsPanel -< ()
         returnA -< isPlaying ) |)
 
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
@@ -53,25 +53,25 @@ convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage
 convert octs notes channel oct Nothing (Std (NoteOn c k v)) = do
     let (p, o) = pitch c
         randNote = 12 * oct + pcToInt p
-    if p `elem` notes
+    if p `elem` notes && o `elem` octs
         then Just (Std (NoteOn channel randNote v))
         else Nothing
 convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
     let (p, o) = pitch c
         randNote = 12 * oct + pcToInt p
-    if p `elem` notes
+    if p `elem` notes && o `elem` octs
         then Just (Std (NoteOff channel randNote v))
         else Nothing
 convert octs notes channel oct note (Std (NoteOn c k v)) = do
     let (p, o) = pitch c
     randN <- note
-    if p `elem` notes
+    if p `elem` notes && o `elem` octs
         then Just (Std (NoteOn channel randN v))
         else Nothing
 convert octs notes channel oct note (Std (NoteOff c k v)) = do
     randN <- note
     let (p, o) = pitch c
-    if p `elem` notes
+    if p `elem` notes && o `elem` octs
         then Just (Std (NoteOff channel randN v))
         else Nothing
 convert octs notes channel oct note _ = Nothing
