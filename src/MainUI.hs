@@ -17,7 +17,7 @@ runMainUI = runMUI (styling "Composer" (2600, 550)) mainUI
 mainUI :: UISF () ()
 mainUI = leftRight $ proc _ -> do
 
-  (mo, miM, out1) <- midiPanel -< ()
+  (mo, tuning, miM, out1) <- midiPanel -< ()
 
   out2 <- channelPanel -< (2, miM)
 
