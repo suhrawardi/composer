@@ -8,20 +8,16 @@ import ChannelPanel
 import Euterpea
 import FRP.UISF
 import HSoM
-import MidiConverterPanel
 import MidiPanel
 
 
-runMainUI = runMUI (styling "Composer" (2500, 550)) mainUI
+runMainUI = runMUI (styling "Composer" (2400, 550)) mainUI
 
 
 mainUI :: UISF () ()
 mainUI = leftRight $ proc _ -> do
 
-  (mo, miM, out1) <- (| topDown ( do
-    (mo, miM) <- midiPanel -< ()
-    out1 <- midiConverterPanel -< (1, miM)
-    returnA -< (mo, miM, out1) ) |)
+  (mo, miM, out1) <- midiPanel -< ()
 
   out2 <- channelPanel -< (2, miM)
 
