@@ -16,9 +16,9 @@ convertOct :: Int -> Maybe MidiMessage -> Maybe MidiMessage
 convertOct _   Nothing         = Nothing
 convertOct oct midiMessage     = do
     (ANote c k v d) <- midiMessage
-    let (p, _) = pitch c
+    let (p, _) = pitch k
         ap = absPitch (p, oct)
-    Just (ANote ap k v d)
+    Just (ANote c ap v d)
 
 
 convertMsg :: Int -> MidiMessage -> Maybe MidiMessage
