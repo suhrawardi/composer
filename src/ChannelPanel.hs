@@ -12,10 +12,11 @@ import HSoM
 import FRP.UISF
 import RandPanel
 import System.Random
+import Tuning
 
 
-channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel, miM) -> do
+channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
+channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel, tuning, miM) -> do
     sourceOcts <- topDown $ setSize (60, 315) $ title "Oct" $ checkGroup octaves -< ()
     sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
@@ -45,8 +46,11 @@ channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel,
       returnA -< (isPlaying, miM'') ) |)
 
     if isPlaying
-      then returnA -< miM'
-      else returnA -< Nothing
+      then do
+        miM'' <- adjustTuning -< (tuning, miM')
+        returnA -< miM''
+      else
+        returnA -< Nothing
 
 
 convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
