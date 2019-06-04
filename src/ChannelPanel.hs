@@ -16,12 +16,13 @@ import Tuning
 
 
 channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (560, 600) $ title "Channel" $ proc (channel, tuning, miM) -> do
-    sourceOcts <- topDown $ setSize (60, 315) $ title "Oct" $ checkGroup octaves -< ()
-    sourceNotes <- topDown $ setSize (60, 315) $ title "In" $ checkGroup notes -< ()
-    targetNotes <- topDown $ setSize (60, 315) $ title "Out" $ checkGroup notes -< ()
+channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel, tuning, miM) -> do
+    sourceOcts <- topDown $ setSize (60, 626) $ title "Oct" $ checkGroup octaves -< ()
+    sourceNotes <- topDown $ setSize (60, 626) $ title "In" $ checkGroup notes -< ()
+    targetNotes <- topDown $ setSize (60, 626) $ title "Out" $ checkGroup notes -< ()
 
     (isPlaying, miM') <- (| topDown ( do
+      tuningSys <- title "Other tuning" $ radio otherTunings 0 -< ()
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         isPlaying <- buttonsPanel -< ()

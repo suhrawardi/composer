@@ -1,7 +1,8 @@
 {-# LANGUAGE Arrows #-}
 
 module Tuning (
-    adjustTuning
+    adjustTuning,
+    otherTunings
   ) where
 
 import Data.Maybe (mapMaybe)
@@ -27,6 +28,12 @@ adjust tuning midiMsg = let pitch = pitchbendFromMsg tuning midiMsg
                              else Nothing
 
 
+channelFromMsg :: MidiMessage -> Int
+channelFromMsg (Std (NoteOn channel _ _)) = channel
+channelFromMsg (ANote channel _ _ _)      = channel
+channelFromMsg _                          = 0
+
+
 pitchbendFromMsg :: Int -> MidiMessage -> Int
 pitchbendFromMsg 0      _                      = 64
 pitchbendFromMsg tuning (Std (NoteOn _ key _)) =
@@ -35,12 +42,6 @@ pitchbendFromMsg tuning (Std (NoteOn _ key _)) =
 pitchbendFromMsg tuning (ANote _ key _ _)      =
     let (p, _) = pitch key
     in pitchbend tuning p
-
-
-channelFromMsg :: MidiMessage -> Int
-channelFromMsg (Std (NoteOn channel _ _)) = channel
-channelFromMsg (ANote channel _ _ _)      = channel
-channelFromMsg _                          = 0
 
 
 pitchbend :: Int -> PitchClass -> Int
@@ -74,3 +75,16 @@ pitchbend 2 B  = 45
 pitchbend 2 Bs = 64
 
 pitchbend _ _  = 64
+
+
+otherTunings :: [String]
+otherTunings = ["None",
+                "Mela Ramapriya",
+                "Mela Rhisabhapriya",
+                "Mela Sarasangi",
+                "Mela Kosalam",
+                "Raga Bageshri",
+                "Persian",
+                "Arabic",
+                "Arabian",
+                "Balinese Pelog"]
