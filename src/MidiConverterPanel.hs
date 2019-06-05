@@ -40,8 +40,9 @@ midiConverterPanel = topDown $ setSize (360, 150) $ proc (channel, miM) -> do
         let miM' = mappend miM s
 
     if isLearning
-      then
-        returnA -< miM'
+      then do
+        tick <- timer -< 1/2
+        returnA -< fmap (const [ANote channel 36 100 01]) tick
       else
         if isPlaying
           then returnA -< miM'

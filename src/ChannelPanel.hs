@@ -50,8 +50,9 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
 
 
     if isLearning
-      then
-        returnA -< moM'
+      then do
+        tick <- timer -< 1/2
+        returnA -< fmap (const [ANote channel 36 100 01]) tick
       else
         if isPlaying
           then do
