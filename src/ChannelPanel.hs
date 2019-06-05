@@ -11,6 +11,7 @@ import Euterpea
 import HSoM
 import FRP.UISF
 import RandPanel
+import Scales
 import System.Random
 import Tuning
 
@@ -22,7 +23,7 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
     targetNotes <- topDown $ setSize (60, 626) $ title "Out" $ checkGroup notes -< ()
 
     (isPlaying, miM') <- (| topDown ( do
-      tuningSys <- title "Other tuning" $ radio otherTunings 0 -< ()
+      scale <- title "Other tuning" $ radio otherScales 0 -< ()
       (isPlaying) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         isPlaying <- buttonsPanel -< ()
@@ -33,7 +34,7 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
 
       t <- timer -< 1
       delay' <- randPanel -< (fromIntegral delay, t)
-      note <- randNote -< (targetNotes, oct, t)
+      note <- randNote -< (intersection scale targetNotes, oct, t)
 
       _ <- (| leftRight ( do
         _ <- title "Dur" $ display -< delay'
@@ -98,7 +99,7 @@ notes = [("C", C), ("Cs", Cs),
          ("F", F), ("Fs", Fs),
          ("G", G), ("Gs", Gs),
          ("A", A), ("As", As),
-         ("B", B), ("Bs", Bs)]
+         ("B", B)]
 
 
 octaves :: [(String, Octave)]

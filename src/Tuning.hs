@@ -1,8 +1,7 @@
 {-# LANGUAGE Arrows #-}
 
 module Tuning (
-    adjustTuning,
-    otherTunings
+    adjustTuning
   ) where
 
 import Data.Maybe (mapMaybe)
@@ -60,7 +59,6 @@ pitchbend 1 As = 83
 pitchbend 1 B  = 70
 
 pitchbend 2 C  = 64
-
 pitchbend 2 Cs = 48
 pitchbend 2 D  = 70
 pitchbend 2 Ds = 55
@@ -72,19 +70,5 @@ pitchbend 2 Gs = 52
 pitchbend 2 A  = 39
 pitchbend 2 As = 58
 pitchbend 2 B  = 45
-pitchbend 2 Bs = 64
 
 pitchbend _ _  = 64
-
-
-otherTunings :: [String]
-otherTunings = ["None",
-                "Mela Ramapriya",
-                "Mela Rhisabhapriya",
-                "Mela Sarasangi",
-                "Mela Kosalam",
-                "Raga Bageshri",
-                "Persian",
-                "Arabic",
-                "Arabian",
-                "Balinese Pelog"]
