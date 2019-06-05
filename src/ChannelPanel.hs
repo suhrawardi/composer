@@ -6,6 +6,7 @@ module ChannelPanel (
 
 import Buttons
 import Data.Maybe (mapMaybe, isJust)
+import Debugger
 import DelayPanel
 import Euterpea
 import HSoM
@@ -22,12 +23,12 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
     sourceNotes <- topDown $ setSize (60, 626) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 626) $ title "Out" $ checkGroup notes -< ()
 
-    (isPlaying, miM') <- (| topDown ( do
+    (isPlaying, isLearning, moM) <- (| topDown ( do
       scale <- title "Other tuning" $ radio otherScales 0 -< ()
-      (isPlaying) <- (| leftRight ( do
+      (isPlaying, isLearning) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
-        isPlaying <- buttonsPanel -< ()
-        returnA -< isPlaying ) |)
+        (isPlaying, isLearning) <- buttonsPanel -< ()
+        returnA -< (isPlaying, isLearning) ) |)
 
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
       delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
@@ -41,42 +42,53 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
         _ <- title "Rand note" $ display -< note
         returnA -< () ) |)
 
-      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM')
-          let miM' = mappend miM s
-      miM'' <- delayPanel -< (delay', miM')
+      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM)
+          let moM = mappend Nothing s
+      moM' <- delayPanel -< (delay', moM)
 
-      returnA -< (isPlaying, miM'') ) |)
+      returnA -< (isPlaying, isLearning, moM') ) |)
 
-    if isPlaying
-      then do
-        miM'' <- adjustTuning -< (tuning, miM')
-        returnA -< miM''
+
+    if isLearning
+      then
+        returnA -< moM'
       else
-        returnA -< Nothing
+        if isPlaying
+          then do
+            moM' <- adjustTuning -< (tuning, maybeTrace moM)
+            returnA -< moM'
+          else
+            returnA -< Nothing
 
 
 convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
 convert octs notes channel oct Nothing (Std (NoteOn c k v)) = do
-    let (p, o) = pitch c
+    let (p, o) = pitch k
         randNote = 12 * oct + pcToInt p
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOn channel randNote v))
         else Nothing
+convert octs notes channel oct note (Std (ControlChange c 2 k)) = do
+    let (p, o) = pitch k
+        randNote = 12 * oct + pcToInt p
+    if p `elem` notes && o `elem` octs
+        then Just (Std (NoteOn channel randNote 127))
+        else Nothing
 convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
-    let (p, o) = pitch c
+    let (p, o) = pitch k
         randNote = 12 * oct + pcToInt p
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOff channel randNote v))
         else Nothing
 convert octs notes channel oct note (Std (NoteOn c k v)) = do
-    let (p, o) = pitch c
+    let (p, o) = pitch k
     randN <- note
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOn channel randN v))
         else Nothing
 convert octs notes channel oct note (Std (NoteOff c k v)) = do
     randN <- note
-    let (p, o) = pitch c
+    let (p, o) = pitch k
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOff channel randN v))
         else Nothing

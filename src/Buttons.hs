@@ -8,7 +8,8 @@ import Data.Maybe (isJust)
 import FRP.UISF
 
 
-buttonsPanel :: UISF () Bool
+buttonsPanel :: UISF () (Bool, Bool)
 buttonsPanel = title "Start/Stop" $ leftRight $ proc _ -> do
-    isPlaying <- checkbox "Playing" False -< ()
-    returnA -< isPlaying
+    isPlaying <- checkbox "Play" False -< ()
+    isLearning <- checkbox "Learn" False -< ()
+    returnA -< (isPlaying, isLearning)

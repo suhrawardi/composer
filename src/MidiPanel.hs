@@ -4,7 +4,6 @@ module MidiPanel (
     midiPanel
   ) where
 
-import Debugger
 import Euterpea
 import FRP.UISF
 import HSoM
@@ -15,7 +14,7 @@ midiPanel :: UISF () (Maybe OutputDeviceID, Int, Maybe [MidiMessage], Maybe [Mid
 midiPanel = topDown $ setSize (360, 550) $ proc _ -> do
     (mo, mi) <- getDeviceIDs -< ()
     miM <- midiIn -< mi
-    _ <- title "Midi in" display -< maybeTrace miM
+    _ <- title "Midi in" display -< miM
     tuning <- title "Tuning" $ radio tunings 0 -< ()
     out <- midiConverterPanel -< (1, miM)
 
