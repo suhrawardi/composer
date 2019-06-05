@@ -23,7 +23,7 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
     sourceNotes <- topDown $ setSize (60, 626) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 626) $ title "Out" $ checkGroup notes -< ()
 
-    (isPlaying, isLearning, moM) <- (| topDown ( do
+    (isPlaying, isLearning, tick, moM) <- (| topDown ( do
       scale <- title "Other tuning" $ radio otherScales 0 -< ()
       (isPlaying, isLearning) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
@@ -33,9 +33,11 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
       oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
       delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
 
-      t <- timer -< 1
-      delay' <- randPanel -< (fromIntegral delay, t)
-      note <- randNote -< (intersection scale targetNotes, oct, t)
+      f <- title "Tempo" $ withDisplay (hSlider (1, 10) 2) -< ()
+      tick <- timer -< 1/f
+
+      delay' <- randPanel -< (fromIntegral delay, tick)
+      note <- randNote -< (intersection scale targetNotes, oct, tick)
 
       _ <- (| leftRight ( do
         _ <- title "Dur" $ display -< delay'
@@ -46,17 +48,15 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
           let moM = mappend Nothing s
       moM' <- delayPanel -< (delay', moM)
 
-      returnA -< (isPlaying, isLearning, moM') ) |)
-
+      returnA -< (isPlaying, isLearning, tick, moM') ) |)
 
     if isLearning
-      then do
-        tick <- timer -< 1/2
+      then
         returnA -< fmap (const [ANote channel 36 100 01]) tick
       else
         if isPlaying
           then do
-            moM' <- adjustTuning -< (tuning, maybeTrace moM)
+            moM' <- adjustTuning -< (tuning, moM)
             returnA -< moM'
           else
             returnA -< Nothing
