@@ -18,10 +18,10 @@ import Tuning
 
 
 channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel, tuning, miM) -> do
-    sourceOcts <- topDown $ setSize (60, 626) $ title "Oct" $ checkGroup octaves -< ()
-    sourceNotes <- topDown $ setSize (60, 626) $ title "In" $ checkGroup notes -< ()
-    targetNotes <- topDown $ setSize (60, 626) $ title "Out" $ checkGroup notes -< ()
+channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel, tuning, miM) -> do
+    sourceOcts <- topDown $ setSize (60, 696) $ title "Oct" $ checkGroup octaves -< ()
+    sourceNotes <- topDown $ setSize (60, 696) $ title "In" $ checkGroup notes -< ()
+    targetNotes <- topDown $ setSize (60, 696) $ title "Out" $ checkGroup notes -< ()
 
     (isPlaying, isLearning, tick, moM) <- (| topDown ( do
       scale <- title "Other tuning" $ radio otherScales 0 -< ()
@@ -46,9 +46,9 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
 
       rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM)
           let moM = mappend Nothing s
-      moM' <- delayPanel -< (delay', moM)
+      -- moM' <- delayPanel -< (delay', moM))
 
-      returnA -< (isPlaying, isLearning, tick, moM') ) |)
+      returnA -< (isPlaying, isLearning, tick, moM) ) |)
 
     if isLearning
       then
@@ -56,7 +56,7 @@ channelPanel = leftRight $ setSize (560, 658) $ title "Channel" $ proc (channel,
       else
         if isPlaying
           then do
-            moM' <- adjustTuning -< (tuning, moM)
+            moM' <- adjustTuning -< (tuning, maybeTrace(moM))
             returnA -< moM'
           else
             returnA -< Nothing
@@ -73,7 +73,7 @@ convert octs notes channel oct note (Std (ControlChange c 2 k)) = do
     let (p, o) = pitch k
         randNote = 12 * oct + pcToInt p
     if p `elem` notes && o `elem` octs
-        then Just (Std (NoteOn channel randNote 127))
+        then Just (ANote channel randNote 127 3)
         else Nothing
 convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
     let (p, o) = pitch k
