@@ -73,7 +73,7 @@ convert octs notes channel oct note (Std (ControlChange c 2 k)) = do
     let (p, o) = pitch k
         randNote = 12 * oct + pcToInt p
     if p `elem` notes && o `elem` octs
-        then Just (ANote channel randNote 127 3)
+        then Just (ANote channel randNote 127 (1/3))
         else Nothing
 convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
     let (p, o) = pitch k
