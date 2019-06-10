@@ -45,30 +45,30 @@ pitchbendFromMsg tuning (ANote _ key _ _)      =
 
 pitchbend :: Int -> PitchClass -> Int
 
-pitchbend 1 C  = 89
-pitchbend 1 Cs = 42
-pitchbend 1 D  = 61
-pitchbend 1 Ds = 37
-pitchbend 1 E  = 67
-pitchbend 1 F  = 86
-pitchbend 1 Fs = 39
-pitchbend 1 G  = 58
-pitchbend 1 Gs = 45
+pitchbend 1 C  = 69
+pitchbend 1 Cs = round 59.625
+pitchbend 1 D  = round 63.375
+pitchbend 1 Ds = round 58.6875
+pitchbend 1 E  = round 64.625
+pitchbend 1 F  = round 68.375
+pitchbend 1 Fs = 59
+pitchbend 1 G  = round 62.75
+pitchbend 1 Gs = round 60.25
 pitchbend 1 A  = 64
-pitchbend 1 As = 83
-pitchbend 1 B  = 70
+pitchbend 1 As = round 67.75
+pitchbend 1 B  = round 65.25
 
 pitchbend 2 C  = 64
-pitchbend 2 Cs = 48
-pitchbend 2 D  = 70
-pitchbend 2 Ds = 55
-pitchbend 2 E  = 39
-pitchbend 2 F  = 61
-pitchbend 2 Fs = 45
-pitchbend 2 G  = 67
-pitchbend 2 Gs = 52
-pitchbend 2 A  = 39
-pitchbend 2 As = 58
-pitchbend 2 B  = 45
+pitchbend 2 Cs = round 60.875
+pitchbend 2 D  = round 65.25
+pitchbend 2 Ds = round 62.125
+pitchbend 2 E  = 59
+pitchbend 2 F  = round 63.375
+pitchbend 2 Fs = round 60.25
+pitchbend 2 G  = round 64.625
+pitchbend 2 Gs = round 61.5
+pitchbend 2 A  = 59
+pitchbend 2 As = round 62.75
+pitchbend 2 B  = round 60.25
 
 pitchbend _ _  = 64
