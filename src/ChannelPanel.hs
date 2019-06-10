@@ -14,10 +14,11 @@ import FRP.UISF
 import RandPanel
 import Scales
 import System.Random
+import Tuning
 
 
-channelPanel :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel, miM) -> do
+channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
+channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel, tuning, miM) -> do
     sourceOcts <- topDown $ setSize (60, 696) $ title "Oct" $ checkGroup octaves -< ()
     sourceNotes <- topDown $ setSize (60, 696) $ title "In" $ checkGroup notes -< ()
     targetNotes <- topDown $ setSize (60, 696) $ title "Out" $ checkGroup notes -< ()
@@ -55,7 +56,8 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
       else
         if isPlaying
           then do
-            returnA -< moM
+            moM' <- adjustTuning -< (tuning, maybeTrace(moM))
+            returnA -< moM'
           else
             returnA -< Nothing
 
