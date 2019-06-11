@@ -30,7 +30,7 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
         (isPlaying, isLearning) <- buttonsPanel -< ()
         returnA -< (isPlaying, isLearning) ) |)
 
-      oct <- title "Octave" $ withDisplay (hiSlider 1 (1, 10) 4) -< ()
+      oct <- title "Octave" $ withDisplay (hiSlider 1 (3, 8) 4) -< ()
       delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
 
       f <- title "Tempo" $ withDisplay (hSlider (1, 10) 2) -< ()
@@ -65,19 +65,19 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
 convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
 convert octs notes channel oct Nothing (Std (NoteOn c k v)) = do
     let (p, o) = pitch k
-        randNote = 12 * oct + pcToInt p
+        randNote = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOn channel randNote v))
         else Nothing
 convert octs notes channel oct note (Std (ControlChange c 2 k)) = do
     let (p, o) = pitch k
-        randNote = 12 * oct + pcToInt p
+        randNote = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
         then Just (ANote channel randNote 127 (1/3))
         else Nothing
 convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
     let (p, o) = pitch k
-        randNote = 12 * oct + pcToInt p
+        randNote = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
         then Just (Std (NoteOff channel randNote v))
         else Nothing
@@ -117,7 +117,7 @@ notes = [("C", C), ("Cs", Cs),
 
 octaves :: [(String, Octave)]
 octaves = [("1", 1), ("2", 2), ("3", 3), ("4", 4), ("5", 5),
-           ("6", 6), ("7", 7), ("8", 8), ("9", 9)]
+           ("6", 6), ("7", 7), ("8", 8), ("9", 9), ("10", 10)]
 
 
 sGen :: StdGen
