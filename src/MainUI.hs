@@ -11,7 +11,7 @@ import HSoM
 import MidiPanel
 
 
-runMainUI = runMUI (styling "Composer" (2600, 760)) mainUI
+runMainUI = runMUI (styling "Composer" (2040, 760)) mainUI
 
 
 mainUI :: UISF () ()
@@ -25,9 +25,7 @@ mainUI = leftRight $ proc _ -> do
 
   out4 <- channelPanel -< (4, tuning, miM)
 
-  out5 <- channelPanel -< (5, tuning, miM)
-
-  midiOut -< (mo, mappend (mappend (mappend (mappend out1 out2) out3) out4) out5)
+  midiOut -< (mo, mappend (mappend (mappend out1 out2) out3) out4)
 
 
 styling :: String -> (Int, Int) -> UIParams
