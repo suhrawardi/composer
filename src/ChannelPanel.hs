@@ -30,7 +30,7 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
         (isPlaying, isLearning) <- buttonsPanel -< ()
         returnA -< (isPlaying, isLearning) ) |)
 
-      oct <- title "Octave" $ withDisplay (hiSlider 1 (3, 8) 4) -< ()
+      oct <- title "Octave" $ withDisplay (hiSlider 1 (2, 7) 4) -< ()
       delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
 
       f <- title "Tempo" $ withDisplay (hSlider (1, 10) 2) -< ()
