@@ -46,9 +46,9 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
 
       rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM)
           let moM = mappend Nothing s
-      -- moM' <- delayPanel -< (delay', moM))
+      moM' <- delayPanel -< (delay', moM)
 
-      returnA -< (isPlaying, isLearning, tick, moM) ) |)
+      returnA -< (isPlaying, isLearning, tick, moM') ) |)
 
     if isLearning
       then
