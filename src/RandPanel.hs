@@ -12,10 +12,12 @@ import System.Random
 
 
 randPanel :: UISF (Double, Maybe ()) Double
-randPanel = topDown $ proc (dur, t) -> do
-    rSeed <- title "Randomness" $ hSlider (2.4, 4.0) 2.4 -< ()
-    r <- accum 0.1 -< fmap (const (grow rSeed)) t
-    returnA -< (normalize dur r)
+randPanel = leftRight $ title "Randomness" $ proc (dur, delay) -> do
+    rSeed <- hSlider (2.4, 4.0) 2.4 -< ()
+    r <- accum 0.1 -< fmap (const (grow rSeed)) delay
+    let delay = normalize dur r
+    _ <- display -< delay
+    returnA -< delay
 
 
 randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)

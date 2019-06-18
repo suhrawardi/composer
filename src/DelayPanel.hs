@@ -11,10 +11,10 @@ import FRP.UISF
 import System.Random
 
 
-decay :: MidiMessage -> Maybe MidiMessage
-decay m =
+decay :: MidiMessage -> Int -> Maybe MidiMessage
+decay m i =
   let f c k v d = if v > 0
-                  then let v' = truncate(fromIntegral v * 2.4)
+                  then let v' = v - truncate(127 / fromIntegral i)
                        in Just (ANote c k v' d)
                   else Nothing
 
@@ -23,20 +23,21 @@ decay m =
     _                  -> Nothing
 
 
-maybeDecay :: Time -> MidiMessage -> Maybe MidiMessage
-maybeDecay dur (Std (NoteOn c k v)) = decay (ANote c k v dur)
-maybeDecay dur (ANote c k v _)  = decay (ANote c k v dur)
-maybeDecay _   _     = Nothing
+maybeDecay :: Int -> MidiMessage -> Maybe MidiMessage
+maybeDecay i (Std (NoteOn c k v)) = decay (ANote c k v (1/fromIntegral i)) i
+maybeDecay i (ANote c k v _)      = decay (ANote c k v (1/fromIntegral i)) i
+maybeDecay _ _                    = Nothing
 
 
-delayPanel :: UISF (Double, Maybe [MidiMessage]) (Maybe [MidiMessage])
-delayPanel = title "Channel" $ topDown $ proc (dur, m) -> do
-    f <- title "Echo frequency" $ withDisplay (hSlider (0, 10) 0) -< ()
+delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
+delayPanel = title "Feedback" $ topDown $ proc m -> do
+    i <- withDisplay (hiSlider 1 (0, 20) 0) -< ()
 
-    if f == 0
+    if i == 0
       then
         returnA -< m
       else do
-        rec s <- vdelay -< (1/f, fmap (mapMaybe (maybeDecay dur)) m')
+        rec s <- vdelay -< (dur, fmap (mapMaybe (maybeDecay i)) m')
             let m' = mappend m s
+                dur = 2/fromIntegral i
         returnA -< s

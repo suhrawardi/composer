@@ -18,33 +18,30 @@ import Tuning
 
 
 channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel, tuning, miM) -> do
-    sourceOcts <- topDown $ setSize (60, 696) $ title "Oct" $ checkGroup octaves -< ()
-    sourceNotes <- topDown $ setSize (60, 696) $ title "In" $ checkGroup notes -< ()
+channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, tuning, miM) -> do
+    (sourceOcts, sourceNotes, scale) <- (| leftRight ( do
+      octs <- topDown $ setSize (150, 290) $ title "Octaves in" $ checkGroup octaves -< ()
+      notes <- topDown $ setSize (150, 290) $ title "Notes through" $ checkGroup notes -< ()
+      scale <- topDown $ setSize (250, 290) $ title "Tuning through" $ radio otherScales 0 -< ()
+      returnA -< (octs, notes, scale) ) |)
 
     (isPlaying, isLearning, tick, moM) <- (| topDown ( do
-      scale <- title "Other tuning" $ radio otherScales 0 -< ()
       (isPlaying, isLearning) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         (isPlaying, isLearning) <- buttonsPanel -< ()
         returnA -< (isPlaying, isLearning) ) |)
 
-      oct <- title "Octave" $ withDisplay (hiSlider 1 (2, 7) 4) -< ()
-      delay <- title "Delay" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
-
-      f <- title "Tempo" $ withDisplay (hSlider (1, 10) 2) -< ()
-      tick <- timer -< 1/f
+      mode <- leftRight $ title "Mode" $ radio ["drone", "rhythm"] 0 -< ()
+      oct <- leftRight $ title "Octave out" $ withDisplay (hiSlider 1 (2, 6) 3) -< ()
+      delay <- leftRight $ title "Delay time" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
+      tick <- timer -< 1/2
 
       delay' <- randPanel -< (fromIntegral delay, tick)
-
-      _ <- (| leftRight ( do
-        _ <- title "Dur" $ display -< delay'
-        returnA -< () ) |)
 
       rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts notes channel oct)) miM)
           let moM = mappend Nothing s
               notes = intersection scale sourceNotes
-      moM' <- delayPanel -< (delay', moM)
+      moM' <- delayPanel -< moM
 
       returnA -< (isPlaying, isLearning, tick, moM') ) |)
 
