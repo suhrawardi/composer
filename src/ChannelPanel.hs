@@ -21,7 +21,6 @@ channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
 channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel, tuning, miM) -> do
     sourceOcts <- topDown $ setSize (60, 696) $ title "Oct" $ checkGroup octaves -< ()
     sourceNotes <- topDown $ setSize (60, 696) $ title "In" $ checkGroup notes -< ()
-    targetNotes <- topDown $ setSize (60, 696) $ title "Out" $ checkGroup notes -< ()
 
     (isPlaying, isLearning, tick, moM) <- (| topDown ( do
       scale <- title "Other tuning" $ radio otherScales 0 -< ()
@@ -37,15 +36,14 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
       tick <- timer -< 1/f
 
       delay' <- randPanel -< (fromIntegral delay, tick)
-      note <- randNote -< (intersection scale targetNotes, oct, tick)
 
       _ <- (| leftRight ( do
         _ <- title "Dur" $ display -< delay'
-        _ <- title "Rand note" $ display -< note
         returnA -< () ) |)
 
-      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts sourceNotes channel oct note)) miM)
+      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts notes channel oct)) miM)
           let moM = mappend Nothing s
+              notes = intersection scale sourceNotes
       moM' <- delayPanel -< (delay', moM)
 
       returnA -< (isPlaying, isLearning, tick, moM') ) |)
@@ -62,47 +60,26 @@ channelPanel = leftRight $ setSize (560, 718) $ title "Channel" $ proc (channel,
             returnA -< Nothing
 
 
-convert :: [Octave] -> [PitchClass] -> Int -> Octave -> Maybe Int -> MidiMessage -> Maybe MidiMessage
-convert octs notes channel oct Nothing (Std (NoteOn c k v)) = do
+convert :: [Octave] -> [PitchClass] -> Int -> Octave -> MidiMessage -> Maybe MidiMessage
+convert octs notes channel oct (Std (NoteOn c k v)) = do
     let (p, o) = pitch k
-        randNote = 12 * (oct + 1) + pcToInt p
+        note = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
-        then Just (Std (NoteOn channel randNote v))
+        then Just (Std (NoteOn channel note v))
         else Nothing
-convert octs notes channel oct note (Std (ControlChange c 2 k)) = do
+convert octs notes channel oct (Std (ControlChange c 2 k)) = do
     let (p, o) = pitch k
-        randNote = 12 * (oct + 1) + pcToInt p
+        note = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
-        then Just (ANote channel randNote 127 (1/3))
+        then Just (ANote channel note 127 (1/3))
         else Nothing
-convert octs notes channel oct Nothing (Std (NoteOff c k v)) = do
+convert octs notes channel oct (Std (NoteOff c k v)) = do
     let (p, o) = pitch k
-        randNote = 12 * (oct + 1) + pcToInt p
+        note = 12 * (oct + 1) + pcToInt p
     if p `elem` notes && o `elem` octs
-        then Just (Std (NoteOff channel randNote v))
+        then Just (Std (NoteOff channel note v))
         else Nothing
-convert octs notes channel oct note (Std (NoteOn c k v)) = do
-    let (p, o) = pitch k
-    randN <- note
-    if p `elem` notes && o `elem` octs
-        then Just (Std (NoteOn channel randN v))
-        else Nothing
-convert octs notes channel oct note (Std (NoteOff c k v)) = do
-    randN <- note
-    let (p, o) = pitch k
-    if p `elem` notes && o `elem` octs
-        then Just (Std (NoteOff channel randN v))
-        else Nothing
-convert octs notes channel oct note _ = Nothing
-
-
-randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)
-randNote = proc (notes, oct, _) -> do
-    i <- liftAIO randomRIO -< (0, length notes - 1)
-    let note = case notes of
-                    []  -> Nothing
-                    _   -> Just $ absPitch (notes !! i, oct)
-    returnA -< note
+convert octs notes channel oct _ = Nothing
 
 
 notes :: [(String, PitchClass)]

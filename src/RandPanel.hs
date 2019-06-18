@@ -1,7 +1,8 @@
 {-# LANGUAGE Arrows #-}
 
 module RandPanel (
-    randPanel
+    randPanel,
+    randNote
   ) where
 
 import Euterpea
@@ -15,6 +16,15 @@ randPanel = topDown $ proc (dur, t) -> do
     rSeed <- title "Randomness" $ hSlider (2.4, 4.0) 2.4 -< ()
     r <- accum 0.1 -< fmap (const (grow rSeed)) t
     returnA -< (normalize dur r)
+
+
+randNote :: UISF ([PitchClass], Octave, Maybe ()) (Maybe Int)
+randNote = proc (notes, oct, _) -> do
+    i <- liftAIO randomRIO -< (0, length notes - 1)
+    let note = case notes of
+                    []  -> Nothing
+                    _   -> Just $ absPitch (notes !! i, oct)
+    returnA -< note
 
 
 grow :: Double -> Double -> Double
