@@ -17,6 +17,21 @@ import System.Random
 import Tuning
 
 
+adjustM :: MidiMessage -> MidiMessage
+adjustM (ANote c k _ _)      = Std (ControlChange c 2 k)
+adjustM (Std (NoteOn c k _)) = Std (ControlChange c 2 k)
+adjustM a                    = a
+
+
+adjustMode :: UISF (Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
+adjustMode = proc (mode, miM) ->
+    if mode == 0
+      then
+        returnA -< (fmap (map adjustM) miM)
+      else
+        returnA -< miM
+
+
 channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
 channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, tuning, miM) -> do
     (sourceOcts, sourceNotes, scale) <- (| leftRight ( do
@@ -25,7 +40,7 @@ channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, t
       scale <- topDown $ setSize (250, 290) $ title "Tuning through" $ radio otherScales 0 -< ()
       returnA -< (octs, notes, scale) ) |)
 
-    (isPlaying, isLearning, tick, moM) <- (| topDown ( do
+    (isPlaying, isLearning, mode, moM) <- (| topDown ( do
       (isPlaying, isLearning) <- (| leftRight ( do
         _ <- title "Channel" display -< channel
         (isPlaying, isLearning) <- buttonsPanel -< ()
@@ -43,16 +58,18 @@ channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, t
               notes = intersection scale sourceNotes
       moM' <- delayPanel -< moM
 
-      returnA -< (isPlaying, isLearning, tick, moM') ) |)
+      returnA -< (isPlaying, isLearning, mode, moM') ) |)
 
     if isLearning
-      then
+      then do
+        tick <- timer -< 1/2
         returnA -< fmap (const [ANote channel 36 100 01]) tick
       else
         if isPlaying
           then do
             moM' <- adjustTuning -< (tuning, maybeTrace(moM))
-            returnA -< moM'
+            moM'' <- adjustMode -< (mode, moM')
+            returnA -< moM''
           else
             returnA -< Nothing
 
