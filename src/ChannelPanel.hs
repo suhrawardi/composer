@@ -33,7 +33,12 @@ adjustMode = proc (mode, miM) ->
 
 
 channelPanel :: UISF (Int, Int, Maybe [MidiMessage]) (Maybe [MidiMessage])
-channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, tuning, miM) -> do
+channelPanel = topDown $ setSize (560, 670) $ title "Channel" $ proc (channel, tuning, miM') -> do
+    (miM) <- (| leftRight ( do
+      delay <- leftRight $ title "Midi In Delay time" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
+      miM <- vdelay -< (fromIntegral delay, miM')
+      returnA -< (miM) ) |)
+
     (sourceOcts, sourceNotes, scale) <- (| leftRight ( do
       octs <- topDown $ setSize (150, 290) $ title "Octaves in" $ checkGroup octaves -< ()
       notes <- topDown $ setSize (150, 290) $ title "Notes through" $ checkGroup notes -< ()
