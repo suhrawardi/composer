@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows #-}
 
-module DelayPanel (
-    delayPanel
+module DecayPanel (
+    decayPanel
   ) where
 
 import Data.Maybe (mapMaybe, isJust)
@@ -29,8 +29,8 @@ maybeDecay i (ANote c k v _)      = decay (ANote c k v (1/fromIntegral i)) i
 maybeDecay _ _                    = Nothing
 
 
-delayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
-delayPanel = title "Feedback" $ topDown $ proc m -> do
+decayPanel :: UISF (Maybe [MidiMessage]) (Maybe [MidiMessage])
+decayPanel = title "Feedback" $ topDown $ proc m -> do
     i <- withDisplay (hiSlider 1 (0, 20) 0) -< ()
 
     if i == 0

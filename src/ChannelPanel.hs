@@ -7,7 +7,7 @@ module ChannelPanel (
 import Buttons
 import Data.Maybe (mapMaybe, isJust)
 import Debugger
-import DelayPanel
+import DecayPanel
 import Euterpea
 import HSoM
 import FRP.UISF
@@ -48,15 +48,15 @@ channelPanel = topDown $ setSize (560, 640) $ title "Channel" $ proc (channel, t
 
       mode <- leftRight $ title "Mode" $ radio ["drone", "rhythm"] 0 -< ()
       oct <- leftRight $ title "Octave out" $ withDisplay (hiSlider 1 (2, 6) 3) -< ()
-      delay <- leftRight $ title "Delay time" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
+      decay <- leftRight $ title "Decay time" $ withDisplay (hiSlider 1 (0, 50) 0) -< ()
       tick <- timer -< 1/2
 
-      delay' <- randPanel -< (fromIntegral delay, tick)
+      decay' <- randPanel -< (fromIntegral decay, tick)
 
-      rec s <- vdelay -< (delay', fmap (mapMaybe (convert sourceOcts notes channel oct)) miM)
+      rec s <- vdelay -< (decay', fmap (mapMaybe (convert sourceOcts notes channel oct)) miM)
           let moM = mappend Nothing s
               notes = intersection scale sourceNotes
-      moM' <- delayPanel -< moM
+      moM' <- decayPanel -< moM
 
       returnA -< (isPlaying, isLearning, mode, moM') ) |)
 
